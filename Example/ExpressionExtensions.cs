@@ -9,12 +9,13 @@ public static class ExpressionExtensions
         Expression<Func<T, bool>> second)
     {
         var parameter = Expression.Parameter(typeof(T));
-        var expressionVisitor = new ReplaceParameterExpressionVisitor(parameter);
+        var expressionVisitor1 = new ReplaceParameterExpressionVisitor(first.Parameters[0], parameter);
+        var expressionVisitor2 = new ReplaceParameterExpressionVisitor(second.Parameters[0], parameter);
 
         return Expression.Lambda<Func<T, bool>>(
             Expression.AndAlso(
-                expressionVisitor.Visit(first.Body),
-                expressionVisitor.Visit(second.Body)),
+                expressionVisitor1.Visit(first.Body),
+                expressionVisitor2.Visit(second.Body)),
             parameter);
     }
 
@@ -22,26 +23,23 @@ public static class ExpressionExtensions
         Expression<Func<T, bool>> second)
     {
         var parameter = Expression.Parameter(typeof(T));
-        var expressionVisitor = new ReplaceParameterExpressionVisitor(parameter);
+        var expressionVisitor1 = new ReplaceParameterExpressionVisitor(first.Parameters[0], parameter);
+        var expressionVisitor2 = new ReplaceParameterExpressionVisitor(second.Parameters[0], parameter);
 
         return Expression.Lambda<Func<T, bool>>(
             Expression.OrElse(
-                expressionVisitor.Visit(first.Body),
-                expressionVisitor.Visit(second.Body)),
+                expressionVisitor1.Visit(first.Body),
+                expressionVisitor2.Visit(second.Body)),
             parameter);
     }
 
-    private class ReplaceParameterExpressionVisitor(Expression newParameter) : ExpressionVisitor
+    private class ReplaceParameterExpressionVisitor(Expression oldParameter, Expression newParameter)
+        : ExpressionVisitor
     {
         [return: NotNullIfNotNull("node")]
         public override Expression? Visit(Expression? node)
         {
-            if (node is null)
-            {
-                return null;
-            }
-
-            return node.NodeType == ExpressionType.Parameter ? newParameter : base.Visit(node);
+            return node == oldParameter ? newParameter : base.Visit(node);
         }
     }
 }
